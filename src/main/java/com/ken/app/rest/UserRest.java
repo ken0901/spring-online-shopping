@@ -11,5 +11,8 @@ import java.util.Map;
 public interface UserRest {
 
     @PostMapping(path = "/signup")
-    ResponseEntity<String> signUp(@RequestBody(required = true) Map<String,String> requestMap);
+    ResponseEntity<String> signUp(@RequestBody(required = true) Map<String, String> requestMap);
+
+    @PostMapping(path = "/login")
+    ResponseEntity<String> login(@RequestBody(required = true) Map<String, String> requestMap);
 }

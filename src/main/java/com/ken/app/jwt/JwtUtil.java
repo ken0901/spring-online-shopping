@@ -15,6 +15,7 @@ import java.util.function.Function;
 @Service
 public class JwtUtil {
 
+    // size must be 256 bits
     private String secret = "ken";
 
     public String extractUsername(String token){
