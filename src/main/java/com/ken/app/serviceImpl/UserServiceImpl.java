@@ -8,6 +8,7 @@ import com.ken.app.model.User;
 import com.ken.app.repository.UserRepository;
 import com.ken.app.service.UserService;
 import com.ken.app.utils.CafeUtils;
+import com.ken.app.wrapper.UserWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -36,13 +36,18 @@ public class UserServiceImpl implements UserService {
     @Autowired
     JwtUtil jwtUtil;
 
-    private final String TRUE = "true";
-    private final String FALSE = "false";
-    private final String EMAIL = "email";
-    private final String PASSWORD = "password";
-    private final String NAME = "name";
-    private final String CONTRACTNUMBER = "contactNumber";
-    private final String ROLE = "role";
+    @Autowired
+    JwtFilter jwtFilter;
+
+    private static final String TRUE = "true";
+    private static final String FALSE = "false";
+    private static final String EMAIL = "email";
+    private static final String PASSWORD = "password";
+    private static final String NAME = "name";
+    private static final String CONTACTNUMBER = "contactNumber";
+    private static final String ROLE = "role";
+    private static final String ID = "id";
+    private static final String STATUS = "status";
 
 
     @Override
@@ -91,15 +96,53 @@ public class UserServiceImpl implements UserService {
                 HttpStatus.BAD_REQUEST);
     }
 
+    @Override
+    public ResponseEntity<List<UserWrapper>> getAllUser() {
+        try {
+            if(jwtFilter.isAdmin()){
+                return new ResponseEntity<>(userRepository.getAlluser(),HttpStatus.OK);
+            }else{
+                return new ResponseEntity<>(new ArrayList<>(),HttpStatus.UNAUTHORIZED);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(new ArrayList<>(),HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> update(Map<String, String> requestMap) {
+        try{
+            if(jwtFilter.isAdmin()){
+                Optional<User> optional = userRepository.findById(Integer.parseInt(requestMap.get(ID)));
+                if(!optional.isPresent()){ //isEmpty() - java 11
+                    userRepository.updateStatus(requestMap.get(STATUS),Integer.parseInt(requestMap.get(ID)));
+                    sendMailToAllAdmin(requestMap.get(STATUS),optional.get().getEmail(),userRepository.getAllAdmin());
+                    return CafeUtils.getResponseEntity(CafeConstants.USER_STATUS_UPDATE_SUCCESSFULLY,HttpStatus.OK);
+                }else{
+                    CafeUtils.getResponseEntity(CafeConstants.USER_ID_NOT_EXIST,HttpStatus.OK);
+                }
+            }else{
+                return CafeUtils.getResponseEntity(CafeConstants.UNAUTHORIZED_ACCESS,HttpStatus.UNAUTHORIZED);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    private void sendMailToAllAdmin(String s, String email, List<String> allAdmin) {
+    }
+
     private boolean validateSignUpMap(Map<String,String> requestMap){
-        return requestMap.containsKey(NAME) && requestMap.containsKey(CONTRACTNUMBER)
+        return requestMap.containsKey(NAME) && requestMap.containsKey(CONTACTNUMBER)
                 && requestMap.containsKey(EMAIL) && requestMap.containsKey(PASSWORD);
     }
 
     private User getUserFromMap(Map<String, String> requestMap){
         User user = new User();
-        user.setNmae(requestMap.get(NAME));
-        user.setContactNumber(requestMap.get(CONTRACTNUMBER));
+        user.setName(requestMap.get(NAME));
+        user.setContactNumber(requestMap.get(CONTACTNUMBER));
         user.setEmail(requestMap.get(EMAIL));
         user.setPassword(requestMap.get(PASSWORD));
         user.setRole(FALSE);
