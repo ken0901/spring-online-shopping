@@ -8,6 +8,7 @@ import com.ken.app.model.User;
 import com.ken.app.repository.UserRepository;
 import com.ken.app.service.UserService;
 import com.ken.app.utils.CafeUtils;
+import com.ken.app.utils.EmailUtils;
 import com.ken.app.wrapper.UserWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     JwtFilter jwtFilter;
 
+    @Autowired
+    EmailUtils emailUtils;
+
     private static final String TRUE = "true";
     private static final String FALSE = "false";
     private static final String EMAIL = "email";
@@ -48,6 +52,8 @@ public class UserServiceImpl implements UserService {
     private static final String ROLE = "role";
     private static final String ID = "id";
     private static final String STATUS = "status";
+    private static final String USER_APPROVED = "User Approved";
+    private static final String USER_DISABLED = "User Disabled";
 
 
     @Override
@@ -131,7 +137,13 @@ public class UserServiceImpl implements UserService {
         return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-    private void sendMailToAllAdmin(String s, String email, List<String> allAdmin) {
+    private void sendMailToAllAdmin(String status, String user, List<String> allAdmin) {
+        allAdmin.remove(jwtFilter.getCurrentUser());
+        if(status != null && status.equalsIgnoreCase(TRUE)){
+            emailUtils.sendSimpleMessage(jwtFilter.getCurrentUser(),USER_APPROVED,"USER:- "+user+" \n is approved by \nADMIN:-"+jwtFilter.getCurrentUser(),allAdmin);
+        }else{
+            emailUtils.sendSimpleMessage(jwtFilter.getCurrentUser(),USER_DISABLED,"USER:- "+user+" \n is disabled by \nADMIN:-"+jwtFilter.getCurrentUser(),allAdmin);
+        }
     }
 
     private boolean validateSignUpMap(Map<String,String> requestMap){
