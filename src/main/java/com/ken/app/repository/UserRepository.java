@@ -23,4 +23,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Modifying
     Integer updateStatus(@Param("status") String status, @Param("id") Integer id);
 
+    User findByEmail(String email);
 }

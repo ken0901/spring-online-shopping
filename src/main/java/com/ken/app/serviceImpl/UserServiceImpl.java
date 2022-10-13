@@ -1,5 +1,6 @@
 package com.ken.app.serviceImpl;
 
+import com.google.common.base.Strings;
 import com.ken.app.constants.CafeConstants;
 import com.ken.app.jwt.CustomerUsersDetailsService;
 import com.ken.app.jwt.JwtFilter;
@@ -48,12 +49,15 @@ public class UserServiceImpl implements UserService {
     private static final String EMAIL = "email";
     private static final String PASSWORD = "password";
     private static final String NAME = "name";
-    private static final String CONTACTNUMBER = "contactNumber";
+    private static final String CONTACT_NUMBER = "contactNumber";
     private static final String ROLE = "role";
     private static final String ID = "id";
     private static final String STATUS = "status";
     private static final String USER_APPROVED = "User Approved";
     private static final String USER_DISABLED = "User Disabled";
+    private static final String OLD_PASSWORD = "oldPassword";
+    private static final String NEW_PASSWORD = "newPassword";
+    private static final String CREDENTIALS_BY_CAFE_MANAGEMENT_SYSTEM = "Credentials By Cafe Management System";
 
 
     @Override
@@ -137,6 +141,45 @@ public class UserServiceImpl implements UserService {
         return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
+    @Override
+    public ResponseEntity<String> checkToken() {
+        return CafeUtils.getResponseEntity(TRUE,HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<String> changePassword(Map<String, String> requestMap) {
+        try{
+            User userObj = userRepository.findByEmail(jwtFilter.getCurrentUser());
+            if(!userObj.equals(null)){
+                if(userObj.getPassword().equals(requestMap.get(OLD_PASSWORD))){
+                    userObj.setPassword(requestMap.get(NEW_PASSWORD));
+                    userRepository.save(userObj);
+                    return CafeUtils.getResponseEntity(CafeConstants.PASSWORD_UPDATED_SUCCESSFULLY,HttpStatus.OK);
+                }
+                return CafeUtils.getResponseEntity(CafeConstants.INCORRECT_OLD_PASSWORD,HttpStatus.BAD_REQUEST);
+            }
+            return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> forgotPassword(Map<String, String> requestMap) {
+        try{
+            User user = userRepository.findByEmail(requestMap.get(EMAIL));
+            if(!Objects.isNull(user) && !Strings.isNullOrEmpty(user.getEmail())){
+                emailUtils.forgotMail(user.getEmail(), CREDENTIALS_BY_CAFE_MANAGEMENT_SYSTEM,user.getPassword());
+                return CafeUtils.getResponseEntity(CafeConstants.EMAIL_SENDER_SUCCESSFULLY,HttpStatus.OK);
+            }
+            return CafeUtils.getResponseEntity(CafeConstants.CHECK_YOUR_EMAIL_FOR_CREDENTIALS,HttpStatus.BAD_REQUEST);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     private void sendMailToAllAdmin(String status, String user, List<String> allAdmin) {
         allAdmin.remove(jwtFilter.getCurrentUser());
         if(status != null && status.equalsIgnoreCase(TRUE)){
@@ -147,14 +190,14 @@ public class UserServiceImpl implements UserService {
     }
 
     private boolean validateSignUpMap(Map<String,String> requestMap){
-        return requestMap.containsKey(NAME) && requestMap.containsKey(CONTACTNUMBER)
+        return requestMap.containsKey(NAME) && requestMap.containsKey(CONTACT_NUMBER)
                 && requestMap.containsKey(EMAIL) && requestMap.containsKey(PASSWORD);
     }
 
     private User getUserFromMap(Map<String, String> requestMap){
         User user = new User();
         user.setName(requestMap.get(NAME));
-        user.setContactNumber(requestMap.get(CONTACTNUMBER));
+        user.setContactNumber(requestMap.get(CONTACT_NUMBER));
         user.setEmail(requestMap.get(EMAIL));
         user.setPassword(requestMap.get(PASSWORD));
         user.setRole(FALSE);
