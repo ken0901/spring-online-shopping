@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
         try{
             if(jwtFilter.isAdmin()){
                 Optional<User> optional = userRepository.findById(Integer.parseInt(requestMap.get(ID)));
-                if(!optional.isPresent()){ //isEmpty() - java 11
+                if(!(optional.equals(Optional.empty()))){ //isEmpty() - java 11
                     userRepository.updateStatus(requestMap.get(STATUS),Integer.parseInt(requestMap.get(ID)));
                     sendMailToAllAdmin(requestMap.get(STATUS),optional.get().getEmail(),userRepository.getAllAdmin());
                     return CafeUtils.getResponseEntity(CafeConstants.USER_STATUS_UPDATE_SUCCESSFULLY,HttpStatus.OK);
