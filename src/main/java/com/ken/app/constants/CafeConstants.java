@@ -13,4 +13,5 @@ public class CafeConstants {
     public static final String INCORRECT_OLD_PASSWORD = "Incorrect Old Password";
     public static final String CHECK_YOUR_EMAIL_FOR_CREDENTIALS = "Check Your Email For Credentials";
     public static final String EMAIL_SENDER_SUCCESSFULLY = "Email Was Sent Successfully";
+    public static final String CATEGORY_ADDED_SUCCESSFULLY = "Category Added Successfully";
 }
