@@ -7,12 +7,16 @@ import com.ken.app.model.Product;
 import com.ken.app.repository.ProductRepository;
 import com.ken.app.service.ProductService;
 import com.ken.app.utils.CafeUtils;
+import com.ken.app.wrapper.ProductWrapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class ProductServiceImpl implements ProductService {
@@ -40,6 +44,42 @@ public class ProductServiceImpl implements ProductService {
                 }
                 return CafeUtils.getResponseEntity(CafeConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }else{
+                return CafeUtils.getResponseEntity(CafeConstants.UNAUTHORIZED_ACCESS,HttpStatus.UNAUTHORIZED);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return CafeUtils.getResponseEntity(CafeConstants.SOMETHING_WENT_WRONG, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<List<ProductWrapper>> getAllProduct() {
+        try {
+            return new ResponseEntity<>(productRepository.getAllProduct(), HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(new ArrayList<>(),HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @Override
+    public ResponseEntity<String> updateProduct(Map<String, String> requestMap) {
+        try {
+            if(jwtFilter.isAdmin()){
+                if(validateProductMap(requestMap,true)){
+                    Optional<Product> optional = productRepository.findById(Integer.parseInt(requestMap.get(ID)));
+                    if(!optional.equals(Optional.empty())){
+                        Product product = getProductFromMap(requestMap, true);
+                        product.setStatus(optional.get().getStatus());
+                        productRepository.save(product);
+                        return CafeUtils.getResponseEntity(CafeConstants.PRODUCT_UPDATED_SUCCESSFULLY,HttpStatus.OK);
+                    }else{
+                        return CafeUtils.getResponseEntity(CafeConstants.PRODUCT_ID_DOES_NOT_EXIST,HttpStatus.OK);
+                    }
+                }else {
+                    return CafeUtils.getResponseEntity(CafeConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
+                }
+            }else {
                 return CafeUtils.getResponseEntity(CafeConstants.UNAUTHORIZED_ACCESS,HttpStatus.UNAUTHORIZED);
             }
         }catch (Exception e){
