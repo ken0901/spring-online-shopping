@@ -39,7 +39,7 @@ public class Bill implements Serializable {
     private Integer total;
 
     @Column(name = "productDetails", columnDefinition = "json")
-    private String productDetail;
+    private String productDetails;
 
     @Column(name = "createdBy")
     private String createdBy;

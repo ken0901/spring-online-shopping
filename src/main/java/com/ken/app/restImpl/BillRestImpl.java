@@ -18,7 +18,7 @@ public class BillRestImpl implements BillRest {
     BillService billService;
 
     @Override
-    public ResponseEntity<String> generateReport(Map<String, String> requestMap) {
+    public ResponseEntity<String> generateReport(Map<String, Object> requestMap) {
         try {
             return billService.generateReport(requestMap);
         }catch (Exception e){
