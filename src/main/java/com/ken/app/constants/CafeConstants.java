@@ -31,4 +31,6 @@ public class CafeConstants {
 
     // bill
     public static final String STORE_LOCATION = "location";
+    public static final String BILL_DELETED_SUCCESSFULLY = "Bill Deleted Successfully";
+    public static final String BILL_ID_DOES_NOT_EXIST = "Bill Id does not exist";
 }
